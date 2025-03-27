@@ -1,25 +1,38 @@
 import random
+import math
 
 def RandomizedMaxCut(n, edges):
-    S = set()
-    for v in range(1, n + 1):
-        if random.random() < 0.5:
-            S.add(v)
+    c = 2
+    num_trials = max(1, int(c * math.log(n,2)))
+
+    for _ in range(num_trials):
+        S = set()
+        for v in range(1, n + 1):
+            if random.random() < 0.5:
+                S.add(v)
     return S
 
 def GreedyMaxCut(n, edges):
-    S = set()
-    neighbors = {i: set() for i in range(1, n + 1)}
-    for u, v in edges:
-        neighbors[u].add(v)
-        neighbors[v].add(u)
+    adj = [[] for _ in range(n+1)]
+    for u,v in edges:
+        adj[u].append(v)
+        adj[v].append(u)
 
-    for v in range(1, n + 1):
-        count_S = sum(1 for neighbor in neighbors[v] if neighbor in S)
-        count_notS = sum(1 for neighbor in neighbors[v] if neighbor not in S)
-        if count_S <= count_notS:
-            S.add(v)
+    in_set_S = [False] * (n+1)
 
+    for v in range(1, n+1):
+        count_in_S = 0
+        count_not_in_S = 0
+
+        for u in adj[v]:
+            if u < v:
+                if in_set_S[u]:
+                    count_in_S += 1
+                else:
+                    count_not_in_S += 1
+        
+        in_set_S[v] = (count_in_S <= count_not_in_S)
+        S = {v for v in range(1, n+1) if in_set_S[v]}
     return S
 
 def calculate_cut_size(S, edges):
