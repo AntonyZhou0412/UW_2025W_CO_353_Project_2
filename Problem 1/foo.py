@@ -1,19 +1,19 @@
-import sys
+from collections import deque
 
 def find_mother_vertex(graph, n):
     # Mark all vertices as unvisited
     visited = [False] * n
     candidate = 0
     
-    # First DFS to find a potential mother vertex
+    # First pass to find a potential mother vertex
     for v in range(n):
         if not visited[v]:
-            dfs(graph, v, visited)
+            bfs(graph, v, visited)
             candidate = v
     
     # Verify if candidate can reach all vertices
     visited = [False] * n
-    dfs(graph, candidate, visited)
+    bfs(graph, candidate, visited)
     
     for v in range(n):
         if not visited[v]:
@@ -21,16 +21,19 @@ def find_mother_vertex(graph, n):
             
     return candidate
 
-def dfs(graph, v, visited):
-    visited[v] = True
-    for u in graph[v]:
-        if not visited[u]:
-            dfs(graph, u, visited)
+def bfs(graph, start, visited):
+    queue = deque([start])
+    visited[start] = True
+    
+    while queue:
+        v = queue.popleft()
+        for u in graph[v]:
+            if not visited[u]:
+                visited[u] = True
+                queue.append(u)
 
 # Main program
 def main():
-    sys.setrecursionlimit(10**6)  # Increase recursion limit for large graphs
-    
     n, m = map(int, input().split())
     
     # Construct graph
