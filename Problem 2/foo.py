@@ -14,33 +14,54 @@ def RandomizedMaxCut(n, edges):
     cut_size = calculate_cut_size(S, edges) # Calculate the size of the cut
     return S, cut_size
 
-def GreedyMaxCut(n, edges):
-
-    # Initialize adjacency list for each vertex
-    adj = [[] for _ in range(n+1)] 
+def GreedyImproveCut(n, edges, S):
+    # Create adjacency list
+    adj = [[] for _ in range(n+1)]
     for u, v in edges:
-        adj[u].append(v)
-        adj[v].append(u)
+        adj[u].append(v)  
+        adj[v].append(u)  
 
-    in_set_S = [False] * (n+1) # Track which vertices are in set S
+    improved = True  # Flag to check if improvement was made
 
-    for v in range(1, n+1): # Iterate through all vertices
-        count_in_S = 0 # Counter for neighbors in set S
-        count_not_in_S = 0 # Counter for neighbor not in set S
+    # Continue loop until no improvement can be made
+    while improved:
+        improved = False  # Initially assume no improvement
 
-        for u in adj[v]: # Check each neighbor of vertex v
-            if u < v: # Avoid double counting
-                if in_set_S[u]:
-                    count_in_S += 1 
+        # Check each vertex to see if flipping its set membership improves the cut
+        for v in range(1, n+1):
+            cnt_in = 0  # Number of neighbors of v currently in set S
+
+            # Count how many neighbors of v are in set S
+            for u in adj[v]:
+                if u in S:
+                    cnt_in += 1
+
+            cnt_total = len(adj[v])  # Total number of neighbors of v
+            cnt_not = cnt_total - cnt_in  # Number of neighbors of v not in set S
+
+            # Calculate the potential gain of flipping vertex v's set membership
+            if v in S:
+                # If v is currently in S, flipping it moves it out of S
+                # Current contribution is number of neighbors outside S (cnt_not)
+                # After flipping, contribution becomes number of neighbors inside S (cnt_in)
+                gain = cnt_in - cnt_not
+            else:
+                # If v is currently not in S, flipping it moves it into S
+                # Current contribution is number of neighbors inside S (cnt_in)
+                # After flipping, contribution becomes number of neighbors outside S (cnt_not)
+                gain = cnt_not - cnt_in
+
+            # Flip vertex v if gain is positive (improves the cut size)
+            if gain > 0:
+                if v in S:
+                    S.remove(v)  # Remove v from set S
                 else:
-                    count_not_in_S += 1
-        
-        # Put v in S if it has fewer or equal neighbors in S
-        in_set_S[v] = (count_in_S <= count_not_in_S) 
-    
-    S = {v for v in range(1, n+1) if in_set_S[v]} # S = in_set_S
-    cut_size = calculate_cut_size(S, edges) # Calculate the size of the cut
-    return S, cut_size
+                    S.add(v)     # Add v to set S
+
+                improved = True  # Mark that we made an improvement in this iteration
+
+    # Return improved set S and its corresponding cut size
+    return S, calculate_cut_size(S, edges)
 
 def calculate_cut_size(S, edges):
     cut_size = 0
@@ -66,8 +87,7 @@ def main():
         S = S_randomized
     else:
         # Run greedy algorithm if randomized result is insufficient
-        S_greedy, cut_size_greedy = GreedyMaxCut(n, edges)
-        S = S_greedy
+        S, improved_cut_size = GreedyImproveCut(n, edges, S_randomized)
 
     # Output the result
     print(len(S))
